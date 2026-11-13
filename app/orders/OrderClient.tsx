@@ -24,7 +24,7 @@ interface OrderClientProps {
 }
 
 type ExtendedOrder = Order & {
-  user: User;
+  user?: User | null;
 };
 
 const OrdersClient: React.FC<OrderClientProps> = ({ orders }) => {
@@ -33,11 +33,17 @@ const OrdersClient: React.FC<OrderClientProps> = ({ orders }) => {
   let rows: any = [];
 
   if (orders) {
-    rows = orders.map((order) => {
+    rows = orders.map((order: any) => {
+      const isKES = order.currency?.toUpperCase() === "KES";
+      const isStripeCents = order.currency?.toLowerCase() === "usd" && order.amount > 5000;
+      const formattedAmount = isKES
+        ? `KES ${order.amount?.toLocaleString()}`
+        : formatPrice(isStripeCents ? order.amount / 100 : order.amount);
+
       return {
         id: order.id,
-        customer: order.user.name,
-        amount: formatPrice(order.amount / 100),
+        customer: order.user?.name || "Customer",
+        amount: formattedAmount,
         paymentStatus: order.status,
         deliveryStatus: order.deliveryStatus,
         date: moment(order.createDate).fromNow(),
@@ -50,8 +56,8 @@ const OrdersClient: React.FC<OrderClientProps> = ({ orders }) => {
     { field: "customer", headerName: "Customer Name", width: 130 },
     {
       field: "amount",
-      headerName: "Amount(USD)",
-      width: 130,
+      headerName: "Amount (KSh)",
+      width: 140,
       renderCell: (params) => {
         return (
           <div className="font-bold text-slate-800">{params.row.amount}</div>

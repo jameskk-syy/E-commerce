@@ -75,11 +75,15 @@ const AddRating: React.FC<AddRatingProps> = ({ product, user }) => {
   if (!user || !product) return null;
 
   //a user should not be able to add a rating if they don't have their product delivered
-  const deliveredOrder = user?.orders.some(
-    (order) =>
-      order.products.find((item) => item.id === product.id) &&
+  const deliveredOrder = user?.orders?.some((order) => {
+    const products = Array.isArray(order.products)
+      ? (order.products as any[])
+      : [];
+    return (
+      products.some((item: any) => item?.id === product?.id) &&
       order.deliveryStatus === "delivered"
-  );
+    );
+  });
 
   //check if the user has already rated the product so that they don't rate it twice
   const userReview = product?.reviews.find((review: Review) => {

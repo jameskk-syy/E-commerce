@@ -33,18 +33,21 @@ const ItemContent: React.FC<ItemContentProp> = ({ item }) => {
      "
     >
       <div className="col-span-2 justify-self-start flex gap-2 md:gap-4">
-        <Link href={`/product/${item.id}`}>
+        <Link href={`/productDetails/${item.id}`}>
           <div className="relative w-[70px] aspect-square ">
             <Image
               src={item.selectedImg.image}
               fill
               alt={item.name}
+              unoptimized={item.selectedImg.image?.startsWith("data:")}
               className="object-contain"
             />
           </div>
         </Link>
         <div className="flex flex-col justify-between">
-          <Link href={`/product/${item.id}`}>{truncateText(item.name)}</Link>
+          <Link href={`/productDetails/${item.id}`} className="font-semibold text-zinc-900 hover:text-indigo-600 transition">
+            {truncateText(item.name)}
+          </Link>
           <div>{item.selectedImg.color}</div>
           <div className="w-[70px]">
             <button

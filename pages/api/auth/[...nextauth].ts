@@ -15,27 +15,56 @@ export const authOptions: AuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: {
-          label: "email",
-          type: "text",
-        },
-        password: {
-          label: "password",
-          type: "password",
-        },
+        email: { label: "email", type: "text" },
+        password: { label: "password", type: "password" },
+        otp: { label: "otp", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials.password) {
-          throw new Error("Invalid email or password");
+        if (!credentials?.email) {
+          throw new Error("Email is required");
         }
-        //check if user is in db
+
+        const email = credentials.email.toLowerCase().trim();
+
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
+          where: { email },
         });
 
-        if (!user || !user?.hashedPassword) {
+        if (!user) {
+          throw new Error("No account found with this email");
+        }
+
+        // 1. If OTP code is provided, verify against active OTP record
+        if (credentials.otp && credentials.otp.trim().length > 0) {
+          const otpInput = credentials.otp.trim();
+
+          const activeOtp = await prisma.otpVerification.findFirst({
+            where: {
+              email,
+              code: otpInput,
+              used: false,
+              expiresAt: {
+                gt: new Date(),
+              },
+            },
+            orderBy: { createdAt: "desc" },
+          });
+
+          if (!activeOtp) {
+            throw new Error("Invalid or expired 6-digit verification code");
+          }
+
+          // Mark OTP as used
+          await prisma.otpVerification.update({
+            where: { id: activeOtp.id },
+            data: { used: true },
+          });
+
+          return user;
+        }
+
+        // 2. Otherwise verify password
+        if (!credentials.password || !user?.hashedPassword) {
           throw new Error("Invalid email or password");
         }
 
@@ -43,6 +72,7 @@ export const authOptions: AuthOptions = {
           credentials.password,
           user.hashedPassword
         );
+
         if (!isCorrectPassword) {
           throw new Error("Invalid email or password");
         }
@@ -51,6 +81,20 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).role = token.role;
+      }
+      return session;
+    },
+  },
   pages: {
     signIn: "/login",
   },

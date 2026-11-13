@@ -1,7 +1,11 @@
-export const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        
-    }).format(amount)
+export const formatPrice = (amount: number | string | null | undefined): string => {
+  if (amount === null || amount === undefined || isNaN(Number(amount))) {
+    return "KSh 0";
+  }
+
+  const numeric = Number(amount);
+  return `KSh ${numeric.toLocaleString("en-KE", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })}`;
 };

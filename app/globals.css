@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Suppress Navbar and Footer on Not-Found / 404 pages instantly */
+body:has([data-not-found]) header,
+body:has([data-not-found]) footer {
+  display: none !important;
+}

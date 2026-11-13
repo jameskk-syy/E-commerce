@@ -3,16 +3,12 @@
 import { useRouter } from "next/navigation";
 import queryString from "query-string";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import { FiSearch, FiArrowRight } from "react-icons/fi";
 
 const SearchBar = () => {
   const router = useRouter();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FieldValues>({
+  const { register, handleSubmit, reset } = useForm<FieldValues>({
     defaultValues: {
       searchTerm: "",
     },
@@ -24,7 +20,7 @@ const SearchBar = () => {
       {
         url: "/",
         query: {
-          searchTerm: data.searchTerm,
+          searchTerm: data.searchTerm.trim(),
         },
       },
       {
@@ -36,21 +32,65 @@ const SearchBar = () => {
   };
 
   return (
-    <div className="flex items-center">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="relative flex items-center w-full group"
+    >
+      <div className="absolute left-3.5 text-zinc-400 group-focus-within:text-zinc-900 transition pointer-events-none">
+        <FiSearch className="text-sm" />
+      </div>
+
       <input
         autoComplete="off"
         {...register("searchTerm")}
         type="text"
-        placeholder="Explore.."
-        className="p-2 border border-gray-300 rounded-1-md focus:outline-none focus:border-[0.5px] focus:border-slate-500 w-80"
+        placeholder="Search phones, laptops, audio..."
+        className="
+          w-full
+          py-2.5
+          pl-10
+          pr-12
+          text-xs
+          border
+          border-zinc-200
+          rounded-full
+          bg-zinc-50/80
+          hover:bg-zinc-100/60
+          focus:bg-white
+          text-zinc-900
+          placeholder-zinc-400
+          focus:border-zinc-900
+          focus:ring-2
+          focus:ring-zinc-100
+          focus:outline-none
+          transition-all
+          shadow-2xs
+        "
       />
+
       <button
-        onClick={handleSubmit(onSubmit)}
-        className="bg-slate-700 hover:opacity-80 text-white p-2 rounded-r-md"
+        type="submit"
+        aria-label="Search"
+        className="
+          absolute
+          right-1.5
+          w-7
+          h-7
+          rounded-full
+          bg-zinc-900
+          hover:bg-indigo-600
+          text-white
+          flex
+          items-center
+          justify-center
+          transition-all
+          shadow-2xs
+          cursor-pointer
+        "
       >
-        search
+        <FiArrowRight className="text-xs" />
       </button>
-    </div>
+    </form>
   );
 };
 

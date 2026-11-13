@@ -1,127 +1,129 @@
 datasource db {
-  provider = "mongodb"
+  provider = "mysql"
   url      = env("DATABASE_URL")
-  
 }
 
 generator client {
-  provider        = "prisma-client-js"
-
+  provider = "prisma-client-js"
 }
 
 model Account {
-  id                 String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId             String  @db.ObjectId
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.String
-  access_token       String?  @db.String
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.String
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
-
-
 model User {
-  id           String  @id @default(auto()) @map("_id") @db.ObjectId
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
   hashedPassword String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt 
-  role Role @default(USER)
+  phoneNumber    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  role           Role      @default(USER)
 
-  accounts      Account[]
-  orders        Order[] 
-  reviews       Review[]
- 
+  accounts Account[]
+  orders   Order[]
+  reviews  Review[]
 }
 
 model Order {
-  id   String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
-  amount Float
-  currency String
-  status String
-  deliveryStatus String?
-  createDate DateTime @default(now())
-  paymentIntentId String @unique
-  products CartProductType[]
-  address Address?
+  id              String   @id @default(cuid())
+  userId          String?
+  customerName    String?
+  customerEmail   String?
+  amount          Float
+  currency        String
+  status          String
+  deliveryStatus  String?
+  createDate      DateTime @default(now())
+  paymentIntentId String?  @unique
+  mpesaReceipt    String?
+  phoneNumber     String?
+  paymentMethod   String?
+  products        Json
+  address         Json?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Product {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  name String
-  description String
-  price Float
-  brand String
-  category String
-  inStock Boolean
-  images Image[]
-  reviews Review[]
-
+  id            String   @id @default(cuid())
+  name          String
+  description   String   @db.Text
+  price         Float
+  brand         String
+  category      String
+  inStock       Boolean  @default(true)
+  stockQuantity Int      @default(10)
+  images        Json
+  reviews       Review[]
 }
 
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  subtitle  String?  @db.Text
+  badge     String?
+  discount  String?
+  link      String?
+  image     String   @db.LongText
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
 
 model Review {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
-  productId String @db.ObjectId
-  rating Int
-  comment String
+  id          String   @id @default(cuid())
+  userId      String
+  productId   String
+  rating      Int
+  comment     String   @db.Text
   createdDate DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productId])
 }
 
+model OtpVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
 
-
-type CartProductType{
-  id String
-  name String
-  description String
-  category String
-  brand String
-  selectedImg Image
-  quantity Int
-  price Float
+  @@index([email])
 }
-
-type Image{
-  color String
-  colorCode String
-  image String
-}
-
-type Address {
-  city String
-  country String
-  line1 String
-  line2 String?
-  postal_code String
-  state String
-}
-
-
 
 enum Role {
-    USER
-    ADMIN
+  USER
+  ADMIN
 }
-
-
-
